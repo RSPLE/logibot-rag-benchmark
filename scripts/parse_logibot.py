@@ -1,9 +1,9 @@
 """
 Extrai os dados do dump logibot-db.sql (testes de RAG com alunos da Gaspar Viana
-e do IFPA) e gera dois JSONs:
+e do IFPA) e gera dois JSONs em data/:
 
-  - logibot-data.json          -> métricas agregadas, sem texto de mensagens (para gráficos)
-  - logibot-chat-messages.json -> mensagens completas de chat (para análise qualitativa)
+  - data/logibot-data.json          -> métricas agregadas, sem texto de mensagens (para gráficos)
+  - data/logibot-chat-messages.json -> mensagens completas de chat (para análise qualitativa)
 
 Uso: python3 scripts/parse_logibot.py
 """
@@ -16,8 +16,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "logibot-db.sql"
-OUT_DATA = ROOT / "logibot-data.json"
-OUT_MESSAGES = ROOT / "logibot-chat-messages.json"
+OUT_DATA = ROOT / "data" / "logibot-data.json"
+OUT_MESSAGES = ROOT / "data" / "logibot-chat-messages.json"
 
 LOAD_TEST_UNIVERSITY = "Escola de Testes de Carga"
 

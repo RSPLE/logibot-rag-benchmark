@@ -24,14 +24,14 @@ Cada aluno conversou livremente com o chatbot e respondeu quizzes de lógica de 
 
 ## Dados
 
-Os dados brutos vêm de um dump PostgreSQL (`logibot-db.sql`, não versionado) extraído para dois arquivos JSON:
+Os dados brutos vêm de um dump PostgreSQL (`logibot-db.sql`, não versionado) extraído para dois arquivos JSON em `data/`:
 
-- **`logibot-data.json`** — dados prontos para gráficos, sem texto de mensagens:
+- **`data/logibot-data.json`** — dados prontos para gráficos, sem texto de mensagens:
   - `students[]`: um registro por aluno ativo (74 no total) — instituição, dia, turma, grupo, `rag_mode`, tempo de uso, acertos/erros, contagem de mensagens, tópicos abordados.
   - `quiz_answers[]`: uma linha por pergunta de quiz respondida (assunto, opção escolhida, acerto/erro).
   - `chat_message_metrics[]`: uma linha por resposta do assistente (provider, nº de chunks recuperados, score de recuperação, tempo de resposta, tokens) — sem o texto da mensagem.
   - `summary_by_condition[]` / `summary_by_condition_and_day[]`: métricas já agregadas por modo de RAG (e por dia), prontas para gráfico de barras comparativo.
-- **`logibot-chat-messages.json`** — todas as mensagens de chat com texto completo (pergunta do aluno + resposta da IA) e os trechos recuperados pelo RAG, para análise qualitativa.
+- **`data/logibot-chat-messages.json`** — todas as mensagens de chat com texto completo (pergunta do aluno + resposta da IA) e os trechos recuperados pelo RAG, para análise qualitativa.
 
 Ambos são gerados a partir do dump por [`scripts/parse_logibot.py`](scripts/parse_logibot.py):
 
@@ -46,13 +46,50 @@ python3 scripts/parse_logibot.py
 
 Sobram **74 alunos reais** distribuídos nos 4 dias × 4 grupos.
 
+## Gráficos
+
+Gerados a partir de `data/logibot-data.json` por [`scripts/generate_charts.py`](scripts/generate_charts.py) e salvos como PNG em `charts/`, organizados por tema. As 4 condições usam sempre a mesma cor em todos os gráficos (azul = Sem RAG, laranja = Context RAG, verde = Self RAG, amarelo = Hybrid RAG), para facilitar a comparação visual entre eles.
+
+### [`charts/quiz/`](charts/quiz/) — desempenho de aprendizado
+- `acuracia_por_rag.png` — % de acerto no quiz, por modo de RAG
+- `acuracia_por_rag_e_assunto.png` — % de acerto por modo de RAG × assunto
+- `acuracia_por_rag_e_dia.png` — % de acerto por modo de RAG × dia de teste
+- `acertos_vs_erros_por_rag.png` — volume de respostas corretas vs incorretas
+
+### [`charts/engajamento/`](charts/engajamento/) — uso da plataforma
+- `tempo_medio_sessao_por_rag.png` — tempo médio de sessão (segundos)
+- `mensagens_por_aluno_por_rag.png` — mensagens médias trocadas por aluno
+- `alunos_por_condicao_e_dia.png` — nº de alunos ativos por condição × dia (tamanho de amostra)
+
+### [`charts/comportamento_rag/`](charts/comportamento_rag/) — telemetria do RAG
+- `taxa_recuperacao_por_rag.png` — % de respostas que recuperaram algum chunk de contexto
+- `score_recuperacao_por_rag.png` — score médio dos chunks recuperados
+- `tempo_resposta_por_rag.png` — tempo médio de resposta da IA (segundos)
+- `tokens_por_rag.png` — tokens médios (prompt + completion) por resposta
+
+### Regerar os gráficos
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/parse_logibot.py      # regera data/*.json a partir do dump
+.venv/bin/python scripts/generate_charts.py    # regera charts/**/*.png
+```
+
 ## Estrutura
 
 ```
 .
-├── logibot-db.sql              # dump PostgreSQL original (não versionado)
-├── logibot-data.json           # dados agregados para gráficos
-├── logibot-chat-messages.json  # mensagens completas para análise qualitativa
-└── scripts/
-    └── parse_logibot.py        # script que gera os dois JSONs a partir do dump
+├── logibot-db.sql                    # dump PostgreSQL original (não versionado)
+├── data/
+│   ├── logibot-data.json             # dados agregados para gráficos
+│   └── logibot-chat-messages.json    # mensagens completas para análise qualitativa
+├── charts/
+│   ├── quiz/                         # gráficos de desempenho de aprendizado
+│   ├── engajamento/                  # gráficos de uso da plataforma
+│   └── comportamento_rag/            # gráficos de telemetria do RAG
+├── scripts/
+│   ├── parse_logibot.py              # dump SQL -> data/*.json
+│   └── generate_charts.py            # data/logibot-data.json -> charts/**/*.png
+└── requirements.txt                  # matplotlib
 ```
