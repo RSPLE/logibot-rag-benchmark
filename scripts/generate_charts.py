@@ -219,11 +219,12 @@ def main():
 
     # ============================ charts/engajamento ============================
     # Tempo ativo de chat (minutos) - calculado a partir dos timestamps reais das
-    # mensagens (primeira -> última mensagem de cada chat_session, sem teto - se
-    # o aluno ficou com a aba parada entre mensagens, esse tempo entra na conta),
-    # só entre os alunos que de fato conversaram. O campo total_usage_time do app
-    # está zerado para 58% dos alunos ativos e não é usado aqui.
-    fig, ax = new_fig(6.5, 5.0)
+    # mensagens (primeira -> última mensagem de cada chat_session), só entre os
+    # alunos que de fato conversaram. Sessões reaproveitadas pelo app em dias de
+    # calendário diferentes (span > 2h) são excluídas por parse_logibot.py antes
+    # de chegar aqui. O campo total_usage_time do app está zerado para 58% dos
+    # alunos ativos e não é usado.
+    fig, ax = new_fig(6.5, 5.3)
     xs = list(range(len(RAG_ORDER)))
     heights = [(by_mode[m]["avg_active_chat_time_sec"] or 0) / 60 for m in RAG_ORDER]
     bars = ax.bar(xs, heights, width=0.6, color=[RAG_COLORS[m] for m in RAG_ORDER], zorder=3)
@@ -237,10 +238,16 @@ def main():
         n = by_mode[m]["students_with_chat_count"]
         ax.annotate(f"n={n}", xy=(i, 0), xytext=(0, -22), textcoords="offset points",
                     ha="center", va="top", fontsize=8, color=INK_MUTED)
-    fig.text(0.5, 0.005,
-              "Só alunos com mensagens de chat registradas; primeira à última mensagem de cada sessão, sem descontar tempo parado.",
-              ha="center", fontsize=7.5, color=INK_MUTED)
-    save(fig, CHARTS_DIR / "engajamento" / "tempo_medio_sessao_por_rag.png")
+    fig.text(0.5, 0.01,
+              "Só alunos com chat registrado; sessões reaproveitadas em dias\ndiferentes (>2h de intervalo) foram excluídas do cálculo.",
+              ha="center", fontsize=7.5, color=INK_MUTED, linespacing=1.4)
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.22)
+    out_path = CHARTS_DIR / "engajamento" / "tempo_medio_sessao_por_rag.png"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"  -> {out_path.relative_to(ROOT)}")
 
     simple_bar(
         summary, "avg_messages_per_student",

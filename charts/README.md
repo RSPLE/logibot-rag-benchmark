@@ -41,7 +41,7 @@ Métricas de quanto os alunos efetivamente usaram o chat — não avalia se apre
 ### Tempo médio de chat por modo de RAG
 ![Tempo médio de chat por modo de RAG](engajamento/tempo_medio_sessao_por_rag.png)
 
-Para cada aluno que usou o chat, mede o tempo entre a primeira e a última mensagem daquela sessão, e tira a média do grupo (só entre quem realmente conversou — o número de alunos usado em cada barra está escrito embaixo dela, como "n=19"). **Atenção**: esse tempo não desconta quando o aluno ficou com a aba aberta sem fazer nada — então um único aluno que demorou horas para mandar a segunda mensagem "infla" a média do grupo dele inteiro. É por isso que "Sem RAG" aparece tão alto (394 min): não é que os alunos passaram 6h e meia conversando, é que pelo menos um deles deixou a conversa aberta por muito tempo. Leia esse gráfico com cautela.
+Para cada aluno que usou o chat, mede o tempo entre a primeira e a última mensagem daquela sessão, e tira a média do grupo (só entre quem realmente conversou — o número de alunos usado em cada barra está escrito embaixo dela, como "n=19"). O app às vezes reaproveita a mesma conversa em dias de teste diferentes (aluno volta a uma sessão antiga 1-3 dias depois); quando isso acontece, aquela sessão específica é descartada do cálculo (só 4 casos no total), pra não contar "dias parados" como tempo de chat. Com isso, os grupos ficaram bem parecidos (16-18 min) — só o **Hybrid RAG** se destaca (34 min), mas seu grupo é pequeno (9 alunos), então vale confirmar com mais dados antes de tirar conclusão.
 
 ### Mensagens médias por aluno, por modo de RAG
 ![Mensagens médias por aluno, por modo de RAG](engajamento/mensagens_por_aluno_por_rag.png)

@@ -317,12 +317,22 @@ def main():
     # ---- active_chat_time_sec: tempo de engajamento calculado a partir dos
     #      timestamps reais das mensagens (substitui o total_usage_time do app,
     #      que está zerado para boa parte dos alunos). Para cada chat_session,
-    #      é o intervalo entre a primeira e a última mensagem (sem teto - inclui
-    #      qualquer tempo parado/aba aberta entre mensagens).
+    #      é o intervalo entre a primeira e a última mensagem.
+    #
+    #      Algumas poucas chat_session_id são reaproveitadas pelo app em dias de
+    #      calendário diferentes (ex.: aluno manda mensagem dia 21, só volta a
+    #      usar a mesma conversa no dia 24) - isso não é tempo de uso, é o app
+    #      recuperando uma conversa antiga. Essas sessões têm span de dezenas de
+    #      horas, bem acima de qualquer sessão real (a mais longa "normal" é de
+    #      53 min) - um corte de 2h separa claramente as duas populações, então
+    #      sessões acima disso são tratadas como esse caso e não entram na conta
+    #      (o resto dos dados do aluno - quiz, outras mensagens - é mantido).
+    SESSION_SPAN_CAP_SEC = 2 * 60 * 60
     messages_by_session = defaultdict(list)
     for m in messages_full:
         messages_by_session[m["chat_session_id"]].append(m)
 
+    excluded_sessions = []
     for session_id, msgs in messages_by_session.items():
         msgs.sort(key=lambda m: m["timestamp"])
         student_id = msgs[0]["student_id"]
@@ -331,7 +341,15 @@ def main():
             continue
         span = (datetime.fromisoformat(msgs[-1]["timestamp"].replace(" ", "T"))
                 - datetime.fromisoformat(msgs[0]["timestamp"].replace(" ", "T"))).total_seconds()
+        if span > SESSION_SPAN_CAP_SEC:
+            excluded_sessions.append((session_id, s["name"], span))
+            continue
         s["active_chat_time_sec"] += round(span)
+
+    if excluded_sessions:
+        print(f"Sessões de chat reaproveitadas em dias diferentes, excluídas do tempo de engajamento ({len(excluded_sessions)}):")
+        for sid, name, span in excluded_sessions:
+            print(f"  {sid[:8]}  {name}  {span / 3600:.1f}h")
 
     # ---- resumos agregados por condição -------------------------------------------
     def summarize(students_subset, quiz_subset, msg_subset, assistant_subset):
