@@ -58,6 +58,8 @@ Em vez disso, `students[].active_chat_time_sec` é calculado por [`scripts/parse
 
 Gerados a partir de `data/logibot-data.json` por [`scripts/generate_charts.py`](scripts/generate_charts.py) e salvos como PNG em `charts/`, organizados por tema. As 4 condições usam sempre a mesma cor em todos os gráficos (azul = Sem RAG, laranja = Context RAG, verde = Self RAG, amarelo = Hybrid RAG), para facilitar a comparação visual entre eles.
 
+📖 **[Guia dos gráficos](charts/README.md)** — explicação simples de cada gráfico e do que cada métrica significa, com as imagens embutidas.
+
 ### [`charts/quiz/`](charts/quiz/) — desempenho de aprendizado
 - `acuracia_por_rag.png` — % de acerto no quiz, por modo de RAG
 - `acuracia_por_rag_e_assunto.png` — % de acerto por modo de RAG × assunto
