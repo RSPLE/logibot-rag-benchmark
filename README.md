@@ -48,14 +48,6 @@ python3 scripts/parse_logibot.py
 
 Sobram **74 alunos reais** distribuídos nos 4 dias × 4 grupos.
 
-## Dados sensíveis
-
-O dump completo (`logibot-db.sql`) **não é versionado** (está no `.gitignore`) porque contém hashes de senha (`bcrypt`) das contas. Os e-mails e nomes das contas de aluno já são sintéticos/pseudônimos (`alunoNN@logibot.com`, "Participante NN"), sem PII real, mas o hash de senha por si só não deve ser publicado.
-
-Os arquivos JSON gerados (`logibot-data.json`, `logibot-chat-messages.json`) **não contêm** hash de senha, tokens ou caminhos de arquivo do servidor — só os campos necessários para a análise.
-
-A pasta `.claude/` (configuração local do assistente usado para gerar esta análise) também está no `.gitignore`.
-
 ## Estrutura
 
 ```
@@ -66,7 +58,3 @@ A pasta `.claude/` (configuração local do assistente usado para gerar esta an�
 └── scripts/
     └── parse_logibot.py        # script que gera os dois JSONs a partir do dump
 ```
-
-## Próximos passos
-
-Gerar os gráficos comparativos entre os 4 modos de RAG a partir de `logibot-data.json` (taxa de acerto no quiz, taxa e score de recuperação, tempo de resposta, tokens, engajamento por aluno).
