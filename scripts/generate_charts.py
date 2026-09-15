@@ -189,27 +189,32 @@ def main():
         group_labels=list(acc_by_day.keys()), fmt="{:.0f}%", pct=True,
     )
 
-    # acertos vs erros (barra empilhada) - a cor identifica o modo de RAG (segmento
-    # "corretas"); o segmento cinza é sempre "incorretas", rotulado direto na barra.
-    fig, ax = new_fig(6.5, 4.8)
-    xs = list(range(len(RAG_ORDER)))
+    # acertos vs erros: duas barras lado a lado por modo (corretas coloridas pelo
+    # modo, incorretas em cinza), cada uma com o valor rotulado em cima - dá pra
+    # ler a contagem exata de erradas direto, sem precisar subtrair.
+    fig, ax = new_fig(8.0, 5.0)
     correct = [by_mode[m]["quiz_correct_answers"] for m in RAG_ORDER]
     wrong = [by_mode[m]["quiz_total_answers"] - by_mode[m]["quiz_correct_answers"] for m in RAG_ORDER]
-    ax.bar(xs, correct, width=0.6, color=[RAG_COLORS[m] for m in RAG_ORDER], zorder=3)
-    ax.bar(xs, wrong, width=0.6, bottom=correct, color=GRIDLINE, edgecolor=BASELINE,
-           linewidth=0.6, zorder=3, label="Incorretas")
-    ax.set_xticks(xs)
+    n = len(RAG_ORDER)
+    x = list(range(n))
+    width = 0.34
+    b1 = ax.bar([xi - width / 2 for xi in x], correct, width=width * 0.92,
+                color=[RAG_COLORS[m] for m in RAG_ORDER], zorder=3)
+    b2 = ax.bar([xi + width / 2 for xi in x], wrong, width=width * 0.92,
+                color=GRIDLINE, edgecolor=BASELINE, linewidth=0.6, zorder=3)
+    ax.set_xticks(x)
     ax.set_xticklabels([RAG_LABELS[m] for m in RAG_ORDER])
     ax.set_ylabel("Nº de respostas de quiz")
     ax.set_title("Respostas corretas vs incorretas por modo de RAG", fontsize=13,
                   fontweight="bold", color=INK_PRIMARY, pad=14)
-    for i, m in enumerate(RAG_ORDER):
-        c, total = correct[i], by_mode[m]["quiz_total_answers"]
-        ax.annotate(f"{c} corretas", xy=(i, c / 2), ha="center", va="center",
-                    fontsize=8.5, color="white", fontweight="bold")
-        ax.annotate(f"{total}", xy=(i, total), xytext=(0, 4), textcoords="offset points",
-                    ha="center", va="bottom", fontsize=9, color=INK_SECONDARY)
-    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=1, fontsize=9)
+    bar_labels(ax, b1)
+    bar_labels(ax, b2)
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, facecolor=INK_MUTED, edgecolor="none"),
+        plt.Rectangle((0, 0), 1, 1, facecolor=GRIDLINE, edgecolor=BASELINE, linewidth=0.6),
+    ]
+    ax.legend(handles, ["Corretas (cor = modo de RAG)", "Incorretas"], frameon=False,
+              loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, fontsize=9)
     save(fig, CHARTS_DIR / "quiz" / "acertos_vs_erros_por_rag.png")
 
     # ============================ charts/engajamento ============================
