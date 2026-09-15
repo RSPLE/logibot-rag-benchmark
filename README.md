@@ -58,7 +58,7 @@ Em vez disso, `students[].active_chat_time_sec` é calculado por [`scripts/parse
 
 Gerados a partir de `data/logibot-data.json` por [`scripts/generate_charts.py`](scripts/generate_charts.py) e salvos como PNG em `charts/`, organizados por tema. As 4 condições usam sempre a mesma cor em todos os gráficos (azul = Sem RAG, laranja = Context RAG, verde = Self RAG, amarelo = Hybrid RAG), para facilitar a comparação visual entre eles.
 
-📖 **[Guia dos gráficos](charts/README.md)** — explicação simples de cada gráfico e do que cada métrica significa, com as imagens embutidas. Também disponível em PDF: [`charts/README.pdf`](charts/README.pdf).
+📖 **[Guia dos gráficos](charts/RESUMO.md)** — explicação simples de cada gráfico e do que cada métrica significa, com as imagens embutidas. Também disponível em PDF: [`charts/RESUMO.pdf`](charts/RESUMO.pdf).
 
 ### [`charts/quiz/`](charts/quiz/) — desempenho de aprendizado
 - `acuracia_por_rag.png` — % de acerto no quiz, por modo de RAG
@@ -84,10 +84,10 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/parse_logibot.py      # regera data/*.json a partir do dump
 .venv/bin/python scripts/generate_charts.py    # regera charts/**/*.png
-.venv/bin/python scripts/charts_readme_to_pdf.py  # regera charts/README.pdf
+.venv/bin/python scripts/charts_resumo_to_pdf.py  # regera charts/RESUMO.pdf
 ```
 
-`charts_readme_to_pdf.py` converte o `charts/README.md` para PDF usando o Google Chrome instalado (modo `--headless`, sem precisar de pandoc/wkhtmltopdf/weasyprint) — se o Chrome não estiver em `/Applications`, ajuste `CHROME_CANDIDATES` no início do script.
+`charts_resumo_to_pdf.py` converte o `charts/RESUMO.md` para PDF usando o Google Chrome instalado (modo `--headless`, sem precisar de pandoc/wkhtmltopdf/weasyprint) — se o Chrome não estiver em `/Applications`, ajuste `CHROME_CANDIDATES` no início do script.
 
 ## Estrutura
 
@@ -98,14 +98,14 @@ python3 -m venv .venv
 │   ├── logibot-data.json             # dados agregados para gráficos
 │   └── logibot-chat-messages.json    # mensagens completas para análise qualitativa
 ├── charts/
-│   ├── README.md                     # guia dos gráficos (texto + imagens)
-│   ├── README.pdf                    # o mesmo guia, em PDF
+│   ├── RESUMO.md                     # guia dos gráficos (texto + imagens)
+│   ├── RESUMO.pdf                    # o mesmo guia, em PDF
 │   ├── quiz/                         # gráficos de desempenho de aprendizado
 │   ├── engajamento/                  # gráficos de uso da plataforma
 │   └── comportamento_rag/            # gráficos de telemetria do RAG
 ├── scripts/
 │   ├── parse_logibot.py              # dump SQL -> data/*.json
 │   ├── generate_charts.py            # data/logibot-data.json -> charts/**/*.png
-│   └── charts_readme_to_pdf.py       # charts/README.md -> charts/README.pdf
+│   └── charts_resumo_to_pdf.py       # charts/RESUMO.md -> charts/RESUMO.pdf
 └── requirements.txt                  # matplotlib, markdown
 ```

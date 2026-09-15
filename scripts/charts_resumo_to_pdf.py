@@ -1,9 +1,9 @@
 """
-Converte charts/README.md (o guia dos gráficos, com as imagens embutidas) em
+Converte charts/RESUMO.md (o guia dos gráficos, com as imagens embutidas) em
 um PDF, para quem preferir ler/compartilhar sem abrir o repositório.
 
 Uso:
-    .venv/bin/python scripts/charts_readme_to_pdf.py
+    .venv/bin/python scripts/charts_resumo_to_pdf.py
 
 Requer o pacote "markdown" (veja requirements.txt) e o Google Chrome
 instalado (usa o modo --headless dele para imprimir o HTML em PDF - não
@@ -19,9 +19,9 @@ import markdown
 
 ROOT = Path(__file__).resolve().parent.parent
 CHARTS_DIR = ROOT / "charts"
-MD_FILE = CHARTS_DIR / "README.md"
-HTML_FILE = CHARTS_DIR / "_README_pdf_build.html"
-PDF_FILE = CHARTS_DIR / "README.pdf"
+MD_FILE = CHARTS_DIR / "RESUMO.md"
+HTML_FILE = CHARTS_DIR / "_RESUMO_pdf_build.html"
+PDF_FILE = CHARTS_DIR / "RESUMO.pdf"
 
 CHROME_CANDIDATES = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
