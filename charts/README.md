@@ -2,9 +2,14 @@
 
 Explicação simples de cada gráfico gerado para comparar os 4 modos de RAG testados no LogiBot: **Sem RAG** (baseline, sem buscar material nenhum), **Context RAG**, **Self RAG** e **Hybrid RAG**. Em todos os gráficos, cada modo usa sempre a mesma cor:
 
-🔵 Sem RAG &nbsp;&nbsp; 🟠 Context RAG &nbsp;&nbsp; 🟢 Self RAG &nbsp;&nbsp; 🟡 Hybrid RAG
+| Modo | Cor | Alunos ativos |
+|---|---|---|
+| Sem RAG | 🔵 azul | 25 |
+| Context RAG | 🟠 laranja | 20 |
+| Self RAG | 🟢 verde | 17 |
+| Hybrid RAG | 🟡 amarelo | 12 |
 
-Os grupos não têm o mesmo número de alunos (25 / 20 / 17 / 12, respectivamente) — isso é mencionado em cada gráfico onde faz diferença para a leitura.
+Os grupos não têm o mesmo número de alunos — isso é mencionado em cada gráfico onde faz diferença para a leitura.
 
 ---
 
