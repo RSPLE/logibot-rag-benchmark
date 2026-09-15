@@ -25,7 +25,7 @@ O mesmo % de acerto, mas separado pelos 3 assuntos cobrados no quiz (Estruturas 
 ### Acurácia por modo de RAG e dia de teste
 ![Acurácia por modo de RAG e dia de teste](quiz/acuracia_por_rag_e_dia.png)
 
-O % de acerto repetido para cada um dos 4 dias de teste (Dia 1 e 2 = Gaspar Viana, Dia 3 e 4 = IFPA). É o gráfico que mostra se um resultado é **consistente** (o RAG ganha em quase todo dia) ou se foi só sorte de um dia específico — por exemplo, o Hybrid RAG dispara no Dia 3, mas isso pode ser porque o grupo daquele dia era menor ou mais forte, não necessariamente porque o RAG ficou melhor.
+O % de acerto repetido para cada um dos 4 dias de teste (Dia 1 e 2 = Gaspar Viana, Dia 3 e 4 = IFPA). É o gráfico que mostra se um resultado é **consistente** (o RAG ganha em quase todo dia) ou se foi só sorte de um dia específico. O "n" embaixo de cada barra (número de respostas de quiz que formam aquela %) varia bastante — de 15 a 130 — então uma barra com "n" baixo merece mais cautela antes de virar conclusão. O pico do Hybrid RAG no Dia 3 (78%, n=55) é o resultado mais chamativo do gráfico; vale olhar com atenção ao "n" de cada barra antes de comparar picos entre si.
 
 ### Respostas corretas vs incorretas por modo de RAG
 ![Respostas corretas vs incorretas por modo de RAG](quiz/acertos_vs_erros_por_rag.png)
@@ -46,7 +46,7 @@ Para cada aluno que usou o chat, mede o tempo entre a primeira e a última mensa
 ### Mensagens médias por aluno, por modo de RAG
 ![Mensagens médias por aluno, por modo de RAG](engajamento/mensagens_por_aluno_por_rag.png)
 
-Quantas mensagens (do aluno + da IA somadas) cada aluno trocou, em média, dentro de cada grupo. É um indicador de engajamento mais confiável que o tempo, porque não depende de "quanto tempo a aba ficou aberta" — reflete quanto o aluno efetivamente interagiu. O Hybrid RAG teve a maior média (21 mensagens/aluno), o "Sem RAG" a menor (10,8).
+Quantas mensagens (do aluno + da IA somadas) cada aluno trocou, em média, dentro de cada grupo. É um indicador de engajamento mais confiável que o tempo, porque não depende de "quanto tempo a aba ficou aberta" — reflete quanto o aluno efetivamente interagiu. O Hybrid RAG teve a maior média (21 mensagens/aluno), o "Sem RAG" a menor (10,8). **Atenção ao denominador**: aqui o "n" embaixo de cada barra é *todo* o grupo (inclusive quem nunca abriu o chat, que entra como 0 mensagens) — diferente do gráfico de tempo acima, que só conta quem conversou. Por isso os dois gráficos não são diretamente comparáveis número a número.
 
 ### Nº de alunos ativos por modo de RAG e dia de teste
 ![Nº de alunos ativos por modo de RAG e dia de teste](engajamento/alunos_por_condicao_e_dia.png)
@@ -67,7 +67,7 @@ De todas as respostas que a IA deu, em quantas ela foi buscar um trecho de mater
 ### Score médio de recuperação por modo de RAG
 ![Score médio de recuperação por modo de RAG](comportamento_rag/score_recuperacao_por_rag.png)
 
-Quando o RAG buscou um trecho de material, esse trecho vinha com uma nota de 0 a 100 dizendo o quão relevante ele era para a pergunta do aluno (calculada pelo próprio sistema de busca). O gráfico mostra a média dessa nota — quanto maior, mais "relevante" era o material que a IA estava usando para montar a resposta. "Sem RAG" não aparece aqui, porque nunca busca nada.
+Quando o RAG buscou um trecho de material, esse trecho vinha com uma nota de 0 a 100 dizendo o quão relevante ele era para a pergunta do aluno (calculada pelo próprio sistema de busca). O gráfico mostra a média dessa nota — quanto maior, mais "relevante" era o material que a IA estava usando para montar a resposta. "Sem RAG" aparece como **N/A** (não como uma barra de valor 0) — a métrica simplesmente não existe pra esse modo, já que ele nunca busca nada.
 
 ### Tempo médio de resposta por modo de RAG
 ![Tempo médio de resposta por modo de RAG](comportamento_rag/tempo_resposta_por_rag.png)

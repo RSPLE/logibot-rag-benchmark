@@ -71,7 +71,7 @@ def new_fig(width=7.5, height=5.0):
     return fig, ax
 
 
-def bar_labels(ax, bars, fmt="{:.0f}"):
+def bar_labels(ax, bars, fmt="{:.0f}", fontsize=9):
     for b in bars:
         h = b.get_height()
         if h is None:
@@ -83,7 +83,7 @@ def bar_labels(ax, bars, fmt="{:.0f}"):
             textcoords="offset points",
             ha="center",
             va="bottom",
-            fontsize=9,
+            fontsize=fontsize,
             color=INK_SECONDARY,
         )
 
@@ -114,10 +114,14 @@ def simple_bar(summary, key, title, ylabel, out_path, fmt="{:.0f}", pct=False):
 
 
 def grouped_bar(groups, series_keys, series_labels, title, ylabel, out_path,
-                 group_labels=None, fmt="{:.0f}", pct=False, series_colors=None):
+                 group_labels=None, fmt="{:.0f}", pct=False, series_colors=None,
+                 n_counts=None, footnote=None):
     """groups: list of group keys (e.g. subjects or days).
-    series_keys/series_labels: the rag modes plotted within each group."""
-    fig, ax = new_fig(8.5, 5.2)
+    series_keys/series_labels: the rag modes plotted within each group.
+    n_counts: optional {group: {series: n}} - sample size shown under each bar,
+    so a bar built from very few data points doesn't carry the same visual
+    weight as one built from many."""
+    fig, ax = new_fig(8.5, 5.6 if n_counts else 5.2)
     n_groups = len(groups)
     n_series = len(series_keys)
     width = 0.8 / n_series
@@ -128,8 +132,16 @@ def grouped_bar(groups, series_keys, series_labels, title, ylabel, out_path,
         offset = (i - (n_series - 1) / 2) * width
         heights = [groups[g].get(sk) or 0 for g in groups]
         xs = [xi + offset for xi in x]
-        ax.bar(xs, heights, width=width * 0.92, color=colors[sk],
-               label=series_labels[sk], zorder=3)
+        bars = ax.bar(xs, heights, width=width * 0.92, color=colors[sk],
+                       label=series_labels[sk], zorder=3)
+        bar_labels(ax, bars, fmt, fontsize=7.5)
+        if n_counts:
+            for xi, g in zip(xs, groups):
+                n = n_counts.get(g, {}).get(sk)
+                if n is not None:
+                    ax.annotate(f"n={n}", xy=(xi, 0), xytext=(0, -14),
+                                textcoords="offset points", ha="center", va="top",
+                                fontsize=6.5, color=INK_MUTED, rotation=90)
 
     ax.set_xticks(x)
     ax.set_xticklabels(group_labels or list(groups.keys()))
@@ -137,9 +149,27 @@ def grouped_bar(groups, series_keys, series_labels, title, ylabel, out_path,
     ax.set_title(title, fontsize=13, fontweight="bold", color=INK_PRIMARY, pad=14)
     if pct:
         ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
-    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.12),
+    legend_anchor = -0.16 if n_counts else -0.12
+    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, legend_anchor),
                ncol=n_series, fontsize=9)
-    save(fig, out_path)
+    if footnote:
+        fig.text(0.5, 0.01, footnote, ha="center", fontsize=7.5, color=INK_MUTED)
+        fig.tight_layout()
+        fig.subplots_adjust(bottom=0.30 if n_counts else 0.24)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_path)
+        plt.close(fig)
+        print(f"  -> {out_path.relative_to(ROOT)}")
+    else:
+        if n_counts:
+            fig.tight_layout()
+            fig.subplots_adjust(bottom=0.26)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(out_path)
+            plt.close(fig)
+            print(f"  -> {out_path.relative_to(ROOT)}")
+        else:
+            save(fig, out_path)
 
 
 def main():
@@ -163,30 +193,39 @@ def main():
     # acurácia por rag x assunto
     subjects = sorted({q["subject"] for q in quiz_answers})
     acc_by_subject = {s: {} for s in subjects}
+    n_by_subject = {s: {} for s in subjects}
     for s in subjects:
         for mode in RAG_ORDER:
             qs = [q for q in quiz_answers if q["subject"] == s and q["rag_mode"] == mode]
             acc_by_subject[s][mode] = (100 * sum(q["is_correct"] for q in qs) / len(qs)) if qs else None
+            n_by_subject[s][mode] = len(qs)
     groups = {s: acc_by_subject[s] for s in subjects}
     grouped_bar(
         groups, RAG_ORDER, RAG_LABELS,
         "Acurácia no quiz por modo de RAG e assunto", "% de respostas corretas",
         CHARTS_DIR / "quiz" / "acuracia_por_rag_e_assunto.png",
-        group_labels=subjects, fmt="{:.0f}%", pct=True,
+        group_labels=subjects, fmt="{:.0f}%", pct=True, n_counts=n_by_subject,
+        footnote="\"n\" = número de respostas de quiz por barra.",
     )
 
-    # acurácia por rag x dia
+    # acurácia por rag x dia - amostras por barra variam bastante (15 a 130
+    # respostas), então o "n" embaixo de cada barra é essencial aqui: sem ele,
+    # um pico como o do Hybrid RAG no Dia 4 (só 15 respostas de 2 alunos)
+    # parece tão confiável quanto uma barra com 130 respostas.
     days = sorted({r["day"] for r in summary_by_day})
     acc_by_day = {f"Dia {d}": {} for d in days}
+    n_by_day = {f"Dia {d}": {} for d in days}
     for d in days:
         for mode in RAG_ORDER:
             row = next((r for r in summary_by_day if r["day"] == d and r["rag_mode"] == mode), None)
             acc_by_day[f"Dia {d}"][mode] = row["quiz_accuracy_pct"] if row else None
+            n_by_day[f"Dia {d}"][mode] = row["quiz_total_answers"] if row else None
     grouped_bar(
         acc_by_day, RAG_ORDER, RAG_LABELS,
         "Acurácia no quiz por modo de RAG e dia de teste", "% de respostas corretas",
         CHARTS_DIR / "quiz" / "acuracia_por_rag_e_dia.png",
-        group_labels=list(acc_by_day.keys()), fmt="{:.0f}%", pct=True,
+        group_labels=list(acc_by_day.keys()), fmt="{:.0f}%", pct=True, n_counts=n_by_day,
+        footnote="\"n\" = número de respostas de quiz por barra - varia bastante entre barras, leia picos de \"n\" baixo com cautela.",
     )
 
     # acertos vs erros: duas barras lado a lado por modo (corretas coloridas pelo
@@ -249,12 +288,34 @@ def main():
     plt.close(fig)
     print(f"  -> {out_path.relative_to(ROOT)}")
 
-    simple_bar(
-        summary, "avg_messages_per_student",
-        "Mensagens médias por aluno, por modo de RAG", "Mensagens por aluno",
-        CHARTS_DIR / "engajamento" / "mensagens_por_aluno_por_rag.png",
-        fmt="{:.1f}",
-    )
+    # mensagens por aluno - o denominador é TODOS os alunos do grupo (inclusive
+    # quem nunca conversou, que entra como 0 mensagens), diferente do gráfico de
+    # tempo de chat acima (que só considera quem de fato conversou). Isso é
+    # deixado explícito aqui com "n=" e uma nota, pra não parecer a mesma base.
+    fig, ax = new_fig(6.5, 5.3)
+    xs = list(range(len(RAG_ORDER)))
+    heights = [by_mode[m]["avg_messages_per_student"] or 0 for m in RAG_ORDER]
+    bars = ax.bar(xs, heights, width=0.6, color=[RAG_COLORS[m] for m in RAG_ORDER], zorder=3)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([RAG_LABELS[m] for m in RAG_ORDER])
+    ax.set_ylabel("Mensagens por aluno")
+    ax.set_title("Mensagens médias por aluno, por modo de RAG", fontsize=13,
+                  fontweight="bold", color=INK_PRIMARY, pad=14)
+    bar_labels(ax, bars, "{:.1f}")
+    for i, m in enumerate(RAG_ORDER):
+        n = by_mode[m]["student_count"]
+        ax.annotate(f"n={n}", xy=(i, 0), xytext=(0, -22), textcoords="offset points",
+                    ha="center", va="top", fontsize=8, color=INK_MUTED)
+    fig.text(0.5, 0.01,
+              "\"n\" = todos os alunos do grupo, inclusive quem nunca abriu o chat\n(conta como 0 mensagens) - dilui grupos com mais alunos só de quiz.",
+              ha="center", fontsize=7.5, color=INK_MUTED, linespacing=1.4)
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.22)
+    out_path = CHARTS_DIR / "engajamento" / "mensagens_por_aluno_por_rag.png"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"  -> {out_path.relative_to(ROOT)}")
 
     # alunos por condição x dia
     students_by_day = {f"Dia {d}": {} for d in days}
@@ -278,12 +339,28 @@ def main():
         fmt="{:.1f}%",
     )
 
-    simple_bar(
-        summary, "avg_retrieval_score",
-        "Score médio de recuperação por modo de RAG", "Score médio (0-100)",
-        CHARTS_DIR / "comportamento_rag" / "score_recuperacao_por_rag.png",
-        fmt="{:.1f}",
-    )
+    # score médio de recuperação - "Sem RAG" nunca busca contexto, então a
+    # métrica não se aplica (None nos dados). Antes isso virava uma barra de
+    # altura 0 rotulada "0.0", como se a IA tivesse buscado algo irrelevante;
+    # agora fica sem barra, com "N/A" escrito no lugar, pra não confundir "não
+    # se aplica" com "buscou e a relevância foi zero".
+    fig, ax = new_fig(6.5, 4.8)
+    xs = list(range(len(RAG_ORDER)))
+    for i, m in enumerate(RAG_ORDER):
+        score = by_mode[m]["avg_retrieval_score"]
+        if score is None:
+            ax.annotate("N/A", xy=(i, 0), xytext=(0, 6), textcoords="offset points",
+                        ha="center", va="bottom", fontsize=10, color=INK_MUTED,
+                        style="italic")
+            continue
+        bar = ax.bar([i], [score], width=0.6, color=RAG_COLORS[m], zorder=3)
+        bar_labels(ax, bar)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([RAG_LABELS[m] for m in RAG_ORDER])
+    ax.set_ylabel("Score médio (0-100)")
+    ax.set_title("Score médio de recuperação por modo de RAG", fontsize=13,
+                  fontweight="bold", color=INK_PRIMARY, pad=14)
+    save(fig, CHARTS_DIR / "comportamento_rag" / "score_recuperacao_por_rag.png")
 
     # tempo de resposta em segundos
     fig, ax = new_fig(6.5, 4.8)
