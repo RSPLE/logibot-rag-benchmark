@@ -316,10 +316,9 @@ def main():
 
     # ---- active_chat_time_sec: tempo de engajamento calculado a partir dos
     #      timestamps reais das mensagens (substitui o total_usage_time do app,
-    #      que está zerado para boa parte dos alunos). Soma os intervalos entre
-    #      mensagens consecutivas de cada chat_session, com teto de 5 min por
-    #      intervalo para não contar tempo de aba parada/inativa como uso.
-    GAP_CAP_SEC = 5 * 60
+    #      que está zerado para boa parte dos alunos). Para cada chat_session,
+    #      é o intervalo entre a primeira e a última mensagem (sem teto - inclui
+    #      qualquer tempo parado/aba aberta entre mensagens).
     messages_by_session = defaultdict(list)
     for m in messages_full:
         messages_by_session[m["chat_session_id"]].append(m)
@@ -330,12 +329,9 @@ def main():
         s = students.get(student_id)
         if s is None:
             continue
-        active = 0.0
-        for a, b in zip(msgs, msgs[1:]):
-            gap = (datetime.fromisoformat(b["timestamp"].replace(" ", "T"))
-                   - datetime.fromisoformat(a["timestamp"].replace(" ", "T"))).total_seconds()
-            active += min(gap, GAP_CAP_SEC)
-        s["active_chat_time_sec"] += round(active)
+        span = (datetime.fromisoformat(msgs[-1]["timestamp"].replace(" ", "T"))
+                - datetime.fromisoformat(msgs[0]["timestamp"].replace(" ", "T"))).total_seconds()
+        s["active_chat_time_sec"] += round(span)
 
     # ---- resumos agregados por condição -------------------------------------------
     def summarize(students_subset, quiz_subset, msg_subset, assistant_subset):

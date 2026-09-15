@@ -50,7 +50,9 @@ Sobram **74 alunos reais** distribuídos nos 4 dias × 4 grupos.
 
 O campo `total_usage_time` do próprio app (tabela `user_analyses`) está **zerado em 58% dos alunos ativos** (43 de 74) — inclusive contas com chat e quiz reais registrados. É uma falha de instrumentação na origem, não um problema na extração. Por isso, `students[].total_usage_time_sec` é mantido no JSON só por transparência, mas **não é usado nos gráficos**.
 
-Em vez disso, `students[].active_chat_time_sec` é calculado por [`scripts/parse_logibot.py`](scripts/parse_logibot.py) a partir dos timestamps reais das mensagens: soma os intervalos entre mensagens consecutivas de cada sessão de chat, com teto de 5 min por intervalo (para não contar tempo de aba parada/inativa como uso). Esse cálculo só é possível para os 60 alunos que têm sessão de chat registrada — os outros 14 alunos ativos só fizeram quiz, sem chat.
+Em vez disso, `students[].active_chat_time_sec` é calculado por [`scripts/parse_logibot.py`](scripts/parse_logibot.py) a partir dos timestamps reais das mensagens: para cada sessão de chat, é o intervalo entre a primeira e a última mensagem, sem descontar tempo parado. Esse cálculo só é possível para os 60 alunos que têm sessão de chat registrada — os outros 14 alunos ativos só fizeram quiz, sem chat.
+
+**Sem teto por intervalo, esse número é dominado por outliers**: um aluno que deixou a aba aberta por horas entre duas mensagens conta esse tempo todo como "chat", o que infla bastante a média em grupos pequenos (ex.: em "Sem RAG", uma única sessão de ~10h por um aluno já puxa a média do grupo para quase 400 min). Leia o gráfico de tempo de chat com essa ressalva em mente — ele reflete o intervalo bruto entre primeira e última mensagem, não necessariamente tempo de uso ativo.
 
 ## Gráficos
 
