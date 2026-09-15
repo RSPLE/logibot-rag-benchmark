@@ -190,22 +190,21 @@ def main():
         fmt="{:.1f}%",
     )
 
-    # acurácia por rag x assunto
+    # acurácia por rag x assunto - amostras aqui variam pouco (60 a 115
+    # respostas por barra), sem barra "frágil" que precise de alerta de n,
+    # diferente do gráfico por dia abaixo - por isso não leva rótulo de n.
     subjects = sorted({q["subject"] for q in quiz_answers})
     acc_by_subject = {s: {} for s in subjects}
-    n_by_subject = {s: {} for s in subjects}
     for s in subjects:
         for mode in RAG_ORDER:
             qs = [q for q in quiz_answers if q["subject"] == s and q["rag_mode"] == mode]
             acc_by_subject[s][mode] = (100 * sum(q["is_correct"] for q in qs) / len(qs)) if qs else None
-            n_by_subject[s][mode] = len(qs)
     groups = {s: acc_by_subject[s] for s in subjects}
     grouped_bar(
         groups, RAG_ORDER, RAG_LABELS,
         "Acurácia no quiz por modo de RAG e assunto", "% de respostas corretas",
         CHARTS_DIR / "quiz" / "acuracia_por_rag_e_assunto.png",
-        group_labels=subjects, fmt="{:.0f}%", pct=True, n_counts=n_by_subject,
-        footnote="\"n\" = número de respostas de quiz por barra.",
+        group_labels=subjects, fmt="{:.0f}%", pct=True,
     )
 
     # acurácia por rag x dia - amostras por barra variam bastante (15 a 130
