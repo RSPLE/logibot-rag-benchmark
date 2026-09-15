@@ -341,17 +341,22 @@ def main():
 
     # score médio de recuperação - "Sem RAG" nunca busca contexto, então a
     # métrica não se aplica (None nos dados). Antes isso virava uma barra de
-    # altura 0 rotulada "0.0", como se a IA tivesse buscado algo irrelevante;
-    # agora fica sem barra, com "N/A" escrito no lugar, pra não confundir "não
-    # se aplica" com "buscou e a relevância foi zero".
+    # altura 0 rotulada "0.0", como se a IA tivesse buscado algo irrelevante.
+    # Em vez de um texto solto colado no eixo (que amontoa com o "0" e o rótulo
+    # "Sem RAG" quando a imagem é vista pequena/cortada), desenha uma barra
+    # tracejada (hatch) baixa e clara com "N/A" centralizado dentro dela -
+    # visualmente inconfundível com uma barra de valor real, em qualquer zoom.
     fig, ax = new_fig(6.5, 4.8)
     xs = list(range(len(RAG_ORDER)))
+    real_scores = [by_mode[m]["avg_retrieval_score"] for m in RAG_ORDER if by_mode[m]["avg_retrieval_score"] is not None]
+    placeholder_h = max(real_scores) * 0.14 if real_scores else 10
     for i, m in enumerate(RAG_ORDER):
         score = by_mode[m]["avg_retrieval_score"]
         if score is None:
-            ax.annotate("N/A", xy=(i, 0), xytext=(0, 6), textcoords="offset points",
-                        ha="center", va="bottom", fontsize=10, color=INK_MUTED,
-                        style="italic")
+            ax.bar([i], [placeholder_h], width=0.6, facecolor=SURFACE,
+                   edgecolor=INK_MUTED, linewidth=1, hatch="////", zorder=3)
+            ax.annotate("N/A", xy=(i, placeholder_h / 2), ha="center", va="center",
+                        fontsize=10, color=INK_MUTED, style="italic", zorder=4)
             continue
         bar = ax.bar([i], [score], width=0.6, color=RAG_COLORS[m], zorder=3)
         bar_labels(ax, bar)
