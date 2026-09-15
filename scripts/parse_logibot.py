@@ -12,6 +12,7 @@ import json
 import re
 import statistics
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -184,6 +185,7 @@ def main():
             "rag_mode": info["rag_mode"],
             "level": sp.get("level"),
             "total_usage_time_sec": 0,
+            "active_chat_time_sec": 0,
             "total_correct_answers": 0,
             "total_wrong_answers": 0,
             "chat_session_count": 0,
@@ -195,6 +197,10 @@ def main():
     print(f"Alunos ativos (excluindo teste de carga e contas vazias): {len(students)}")
 
     # ---- user_analyses -> totais de tempo/acerto/erro -------------------------
+    # OBS: total_usage_time (timer do próprio app) está zerado para 58% dos alunos
+    # ativos, mesmo em contas com chat/quiz reais - é um dado incompleto na origem.
+    # Mantido aqui por transparência; para engajamento use active_chat_time_sec,
+    # calculado abaixo a partir dos timestamps reais das mensagens.
     for ua in user_analyses.values():
         s = students.get(ua["user_id"])
         if s is None:
@@ -308,6 +314,29 @@ def main():
 
     print(f"Mensagens de chat vinculadas a alunos ativos: {len(messages_full)} / {len(chat_messages_raw)} no dump")
 
+    # ---- active_chat_time_sec: tempo de engajamento calculado a partir dos
+    #      timestamps reais das mensagens (substitui o total_usage_time do app,
+    #      que está zerado para boa parte dos alunos). Soma os intervalos entre
+    #      mensagens consecutivas de cada chat_session, com teto de 5 min por
+    #      intervalo para não contar tempo de aba parada/inativa como uso.
+    GAP_CAP_SEC = 5 * 60
+    messages_by_session = defaultdict(list)
+    for m in messages_full:
+        messages_by_session[m["chat_session_id"]].append(m)
+
+    for session_id, msgs in messages_by_session.items():
+        msgs.sort(key=lambda m: m["timestamp"])
+        student_id = msgs[0]["student_id"]
+        s = students.get(student_id)
+        if s is None:
+            continue
+        active = 0.0
+        for a, b in zip(msgs, msgs[1:]):
+            gap = (datetime.fromisoformat(b["timestamp"].replace(" ", "T"))
+                   - datetime.fromisoformat(a["timestamp"].replace(" ", "T"))).total_seconds()
+            active += min(gap, GAP_CAP_SEC)
+        s["active_chat_time_sec"] += round(active)
+
     # ---- resumos agregados por condição -------------------------------------------
     def summarize(students_subset, quiz_subset, msg_subset, assistant_subset):
         n_students = len(students_subset)
@@ -320,12 +349,17 @@ def main():
         total_tokens = [m["tokens"]["total_tokens"] for m in assistant_subset if m["tokens"]["total_tokens"] is not None]
         total_messages = len(msg_subset)
 
+        # tempo de engajamento: só entre quem de fato trocou mensagens no chat
+        # (total_usage_time do app está zerado para 58% dos alunos - não usar)
+        chatting = [s for s in students_subset if s["chat_session_count"] > 0]
+
         return {
             "student_count": n_students,
             "quiz_total_answers": total_quiz,
             "quiz_correct_answers": total_correct,
             "quiz_accuracy_pct": round(100 * total_correct / total_quiz, 2) if total_quiz else None,
-            "avg_session_time_sec": round(statistics.mean(s["total_usage_time_sec"] for s in students_subset), 1) if n_students else None,
+            "students_with_chat_count": len(chatting),
+            "avg_active_chat_time_sec": round(statistics.mean(s["active_chat_time_sec"] for s in chatting), 1) if chatting else None,
             "avg_messages_per_student": round(total_messages / n_students, 2) if n_students else None,
             "assistant_message_count": n_assistant,
             "retrieval_rate_pct": round(100 * len(with_retrieval) / n_assistant, 2) if n_assistant else None,

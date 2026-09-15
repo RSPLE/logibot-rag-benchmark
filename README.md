@@ -27,7 +27,7 @@ Cada aluno conversou livremente com o chatbot e respondeu quizzes de lógica de 
 Os dados brutos vêm de um dump PostgreSQL (`logibot-db.sql`, não versionado) extraído para dois arquivos JSON em `data/`:
 
 - **`data/logibot-data.json`** — dados prontos para gráficos, sem texto de mensagens:
-  - `students[]`: um registro por aluno ativo (74 no total) — instituição, dia, turma, grupo, `rag_mode`, tempo de uso, acertos/erros, contagem de mensagens, tópicos abordados.
+  - `students[]`: um registro por aluno ativo (74 no total) — instituição, dia, turma, grupo, `rag_mode`, tempo ativo de chat, acertos/erros, contagem de mensagens, tópicos abordados. Veja a ressalva sobre `total_usage_time_sec` abaixo.
   - `quiz_answers[]`: uma linha por pergunta de quiz respondida (assunto, opção escolhida, acerto/erro).
   - `chat_message_metrics[]`: uma linha por resposta do assistente (provider, nº de chunks recuperados, score de recuperação, tempo de resposta, tokens) — sem o texto da mensagem.
   - `summary_by_condition[]` / `summary_by_condition_and_day[]`: métricas já agregadas por modo de RAG (e por dia), prontas para gráfico de barras comparativo.
@@ -46,6 +46,12 @@ python3 scripts/parse_logibot.py
 
 Sobram **74 alunos reais** distribuídos nos 4 dias × 4 grupos.
 
+### Ressalva: tempo de uso
+
+O campo `total_usage_time` do próprio app (tabela `user_analyses`) está **zerado em 58% dos alunos ativos** (43 de 74) — inclusive contas com chat e quiz reais registrados. É uma falha de instrumentação na origem, não um problema na extração. Por isso, `students[].total_usage_time_sec` é mantido no JSON só por transparência, mas **não é usado nos gráficos**.
+
+Em vez disso, `students[].active_chat_time_sec` é calculado por [`scripts/parse_logibot.py`](scripts/parse_logibot.py) a partir dos timestamps reais das mensagens: soma os intervalos entre mensagens consecutivas de cada sessão de chat, com teto de 5 min por intervalo (para não contar tempo de aba parada/inativa como uso). Esse cálculo só é possível para os 60 alunos que têm sessão de chat registrada — os outros 14 alunos ativos só fizeram quiz, sem chat.
+
 ## Gráficos
 
 Gerados a partir de `data/logibot-data.json` por [`scripts/generate_charts.py`](scripts/generate_charts.py) e salvos como PNG em `charts/`, organizados por tema. As 4 condições usam sempre a mesma cor em todos os gráficos (azul = Sem RAG, laranja = Context RAG, verde = Self RAG, amarelo = Hybrid RAG), para facilitar a comparação visual entre eles.
@@ -57,7 +63,7 @@ Gerados a partir de `data/logibot-data.json` por [`scripts/generate_charts.py`](
 - `acertos_vs_erros_por_rag.png` — volume de respostas corretas vs incorretas
 
 ### [`charts/engajamento/`](charts/engajamento/) — uso da plataforma
-- `tempo_medio_sessao_por_rag.png` — tempo médio de sessão (segundos)
+- `tempo_medio_sessao_por_rag.png` — tempo médio ativo de chat, em minutos (só entre quem conversou; veja a ressalva acima)
 - `mensagens_por_aluno_por_rag.png` — mensagens médias trocadas por aluno
 - `alunos_por_condicao_e_dia.png` — nº de alunos ativos por condição × dia (tamanho de amostra)
 
