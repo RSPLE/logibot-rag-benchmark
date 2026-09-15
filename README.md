@@ -24,7 +24,7 @@ Cada aluno conversou livremente com o chatbot e respondeu quizzes de lógica de 
 
 ## Dados
 
-Os dados brutos vêm de um dump PostgreSQL (`logibot-db.sql`, não versionado — veja [Dados sensíveis](#dados-sensíveis)) extraído para dois arquivos JSON:
+Os dados brutos vêm de um dump PostgreSQL (`logibot-db.sql`, não versionado) extraído para dois arquivos JSON:
 
 - **`logibot-data.json`** — dados prontos para gráficos, sem texto de mensagens:
   - `students[]`: um registro por aluno ativo (74 no total) — instituição, dia, turma, grupo, `rag_mode`, tempo de uso, acertos/erros, contagem de mensagens, tópicos abordados.
@@ -38,8 +38,6 @@ Ambos são gerados a partir do dump por [`scripts/parse_logibot.py`](scripts/par
 ```bash
 python3 scripts/parse_logibot.py
 ```
-
-(sem dependências externas — só a stdlib do Python 3)
 
 ### Exclusões aplicadas
 
